@@ -40,6 +40,42 @@
         </form>
     </div>
 
+    <div class="text-center my-4">
+        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#darfModal">Registrar DARF</button>
+    </div>
+
+    <div class="text-center my-4">
+        <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#darfTableModal">Visualizar Registros de DARF</button>
+    </div>
+
+    <div class="modal fade" id="darfTableModal" tabindex="-1" aria-labelledby="darfTableModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="darfTableModalLabel">Registros de DARF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <!-- <th>ID</th> -->
+                                <th>Valor (R$)</th>
+                                <th>Status</th>
+                                <th>Mês</th>
+                                <th>Ano</th>
+                                <th>Data de Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody id="darfTableBody">
+                            <tr><td colspan="6" class="text-center">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container my-5">
         <h2 class="text-center mb-4">Histórico de Resultados por Mês</h2>
         <div class="row text-center" id="monthButtons">
@@ -102,6 +138,52 @@
                             <input type="number" id="editOperationFee" class="form-control" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="darfModal" tabindex="-1" aria-labelledby="darfModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="darfModalLabel">Registrar DARF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="darfForm">
+                        <div class="mb-3">
+                            <label for="darfValue" class="form-label">Valor (R$)</label>
+                            <input type="number" id="darfValue" class="form-control" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="darfStatus" class="form-label">Status</label>
+                            <select id="darfStatus" class="form-select" required>
+                                <option value="">Selecione...</option>
+                                <option value="pendente">Pendente</option>
+                                <option value="pago">Pago</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="darfMonth" class="form-label">Mês de Referência</label>
+                            <select id="darfMonth" class="form-select" required>
+                                <option value="">Selecione o mês...</option>
+                                <option value="1">Janeiro</option>
+                                <option value="2">Fevereiro</option>
+                                <option value="3">Março</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Maio</option>
+                                <option value="6">Junho</option>
+                                <option value="7">Julho</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Setembro</option>
+                                <option value="10">Outubro</option>
+                                <option value="11">Novembro</option>
+                                <option value="12">Dezembro</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
                     </form>
                 </div>
             </div>
