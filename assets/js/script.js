@@ -47,12 +47,13 @@ async function fetchMonthSummary() {
             const monthButtons = document.getElementById('monthButtons');
             monthButtons.innerHTML = '';
 
+            const currentYear = new Date().getFullYear();
             result.data.forEach(month => {
                 const netResult = parseFloat(month.net_result);
                 const financialResult = parseFloat(month.financial_result);
                 const buttonColor = netResult >= 0 ? 'btn-success' : 'btn-danger';
                 const buttonText = `
-                    ${monthNames[month.month - 1]}: 
+                    ${monthNames[month.month - 1]} ${currentYear}: 
                     <br> Bruto: R$ ${financialResult.toFixed(2)} 
                     <br> Líquido: R$ ${netResult.toFixed(2)}
                 `;
@@ -94,13 +95,17 @@ async function showMonthHistory(month) {
 
             result.data.forEach(trade => {
                 const row = `
-                    <tr>
+                    <tr data-id="${trade.id}">
                         <td>${new Date(trade.date).toLocaleDateString('pt-BR')}</td>
                         <td>${trade.contracts}</td>
                         <td>${trade.points}</td>
                         <td>R$ ${parseFloat(trade.financial_result).toFixed(2)}</td>
                         <td>R$ ${parseFloat(trade.operation_fee).toFixed(2)}</td>
-                        <td>R$ ${parseFloat(trade.net_result).toFixed(2)}</td>
+                        <td>R$ ${parseFloat(trade.net_result).toFixed(2)}</td>   
+                        <td>
+                            <button class="btn btn-warning btn-sm me-2" onclick="editTrade(${trade.id})">Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteTrade(${trade.id})">Excluir</button>
+                        </td>
                     </tr>
                 `;
                 modalHistoryTable.insertAdjacentHTML('beforeend', row);
@@ -116,6 +121,100 @@ async function showMonthHistory(month) {
     const modal = new bootstrap.Modal(document.getElementById('historyModal'));
     modal.show();
 }
+
+// Função para Editar um Registro
+function editTrade(id) {
+    fetch(`get_trades.php?id=${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const trade = data.data;
+                document.getElementById('editId').value = trade.id;
+                document.getElementById('editDate').value = trade.date;
+                document.getElementById('editPoints').value = trade.points;
+                document.getElementById('editContracts').value = trade.contracts;
+                document.getElementById('editOperationFee').value = trade.operation_fee;
+
+                const modal = new bootstrap.Modal(document.getElementById('editModal'));
+                modal.show();
+            } else {
+                alert('Erro ao buscar registro: ' + data.message);
+            }
+        })
+        .catch(error => console.error('Erro:', error));
+}
+
+document.getElementById('editForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    const id = document.getElementById('editId').value;
+    const date = document.getElementById('editDate').value;
+    const points = document.getElementById('editPoints').value;
+    const contracts = document.getElementById('editContracts').value;
+    const operationFee = document.getElementById('editOperationFee').value;
+
+    fetch('edit_trade.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, date, points, contracts, operationFee })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Atualizar a linha correspondente no DOM
+                const row = document.querySelector(`tr[data-id="${id}"]`);
+                if (row) {
+                    const financialResult = (points * 0.20 * contracts).toFixed(2);
+                    const netResult = (financialResult - operationFee).toFixed(2);
+
+                    row.innerHTML = `
+                        <td>${new Date(date).toLocaleDateString('pt-BR')}</td>
+                        <td>${contracts}</td>
+                        <td>${points}</td>
+                        <td>R$ ${financialResult}</td>
+                        <td>R$ ${operationFee}</td>
+                        <td>R$ ${netResult}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm me-2" onclick="editTrade(${id})">Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteTrade(${id})">Excluir</button>
+                        </td>
+                    `;
+                }
+
+                alert('Registro atualizado com sucesso!');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+                modal.hide();
+                fetchMonthSummary();
+            } else {
+                alert('Erro ao atualizar registro: ' + data.message);
+            }
+        })
+        .catch(error => console.error('Erro:', error));
+});
+
+
+// Função para Excluir um Registro
+function deleteTrade(id) {
+    if (confirm('Tem certeza de que deseja excluir este registro?')) {
+        fetch(`delete_trade.php?id=${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remover a linha correspondente do DOM
+                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    if (row) {
+                        row.remove();
+                        fetchMonthSummary();
+                    }
+                    alert('Registro excluído com sucesso!');
+                } else {
+                    alert('Erro ao excluir registro: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+    }
+}
+
 
 document.getElementById('tradeForm').addEventListener('submit', async function (event) {
     event.preventDefault();
@@ -194,6 +293,73 @@ document.querySelectorAll('.month-box').forEach(box => {
         modal.show();
     });
 });
+
+document.getElementById('darfForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const darfValue = document.getElementById('darfValue').value;
+    const darfStatus = document.getElementById('darfStatus').value;
+    const darfMonth = document.getElementById('darfMonth').value;
+
+    if (!darfValue || !darfStatus || !darfMonth) {
+        alert('Por favor, preencha todos os campos.');
+        return;
+    }
+
+    fetch('save_darf.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: parseFloat(darfValue), status: darfStatus, month: parseInt(darfMonth) })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                document.getElementById('darfForm').reset();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('darfModal'));
+                modal.hide();
+            } else {
+                alert('Erro ao salvar DARF: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao salvar DARF:', error);
+            alert('Erro ao salvar DARF. Tente novamente.');
+        });
+});
+
+document.querySelector('[data-bs-target="#darfTableModal"]').addEventListener('click', function() {
+    const tableBody = document.getElementById('darfTableBody');
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Carregando...</td></tr>';
+
+    fetch('get_darf.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data.length > 0) {
+                tableBody.innerHTML = '';
+                data.data.forEach(record => {
+                    const row = `
+                        <tr>
+                            <td>R$ ${parseFloat(record.value).toFixed(2)}</td>
+                            <td>${record.status === 'pago' ? 'Pago' : 'Pendente'}</td>
+                            <td>${['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][record.month - 1]}</td>
+                            <td>${record.year}</td>
+                            <td>${new Date(record.created_at).toLocaleDateString('pt-BR')} ${new Date(record.created_at).toLocaleTimeString('pt-BR')}</td>
+                        </tr>
+                    `;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum registro encontrado.</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao buscar registros de DARF:', error);
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Erro ao carregar os registros.</td></tr>';
+        });
+});
+
+
 
 // Inicializa os botões com resumo do mês ao carregar a página
 fetchMonthSummary();
